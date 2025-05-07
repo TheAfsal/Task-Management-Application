@@ -1,9 +1,6 @@
 import { useState } from 'react'
-import axios from 'axios'
-
-interface TaskFormProps {
-  fetchTasks: () => Promise<void>
-}
+import api from '../api/axiosInstance'
+import type { TaskFormProps } from '../types/task.types'
 
 function TaskForm({ fetchTasks }: TaskFormProps) {
   const [title, setTitle] = useState('')
@@ -12,7 +9,7 @@ function TaskForm({ fetchTasks }: TaskFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      await axios.post('/api/tasks', { title, description, completed: false })
+      await api.post('/tasks', { title, description, completed: false })
       setTitle('')
       setDescription('')
       fetchTasks()
