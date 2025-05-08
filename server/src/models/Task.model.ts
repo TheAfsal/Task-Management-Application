@@ -1,28 +1,17 @@
-import mongoose, { Schema, model } from 'mongoose'
+import { Schema, model, Document } from "mongoose";
+import type { Task } from "../types/task.types";
 
-interface ITask {
-  title: string
-  description?: string
-  completed: boolean
-  createdAt: Date
-}
+interface ITask extends Task, Document {}
 
-const taskSchema = new Schema<ITask>({
-  title: {
-    type: String,
-    required: true,
+const TaskSchema = new Schema<ITask>(
+  {
+    title: { type: String, required: true },
+    description: { type: String },
+    completed: { type: Boolean, default: false },
+    groupId: { type: String, required: true },
+    assignee: { type: String },
   },
-  description: {
-    type: String,
-  },
-  completed: {
-    type: Boolean,
-    default: false,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-})
+  { timestamps: true }
+);
 
-export default model<ITask>('Task', taskSchema)
+export default model<ITask>("Task", TaskSchema);

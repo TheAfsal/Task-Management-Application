@@ -5,6 +5,8 @@ import dotenv from "dotenv";
 import cookieParser from 'cookie-parser';
 import authRoutes from "./routes/auth.route";
 import taskRoutes from "./routes/tasks.route";
+import groupRoutes from "./routes/group.route";
+import inviteRoutes from "./routes/invite.route";
 
 dotenv.config();
 
@@ -23,6 +25,8 @@ app.use(cookieParser());
 
 app.use("/api/tasks", taskRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/groups", groupRoutes);
+app.use("/api/invites", inviteRoutes);
 
 mongoose
   .connect(process.env.MONGO_URI!)
