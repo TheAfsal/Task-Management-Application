@@ -1,6 +1,7 @@
 import TaskModel from "../models/Task.model";
 import GroupModel from "../models/Group.model";
 import UserModel from "../models/User.model";
+import { emitTaskCreated, emitTaskUpdated, emitTaskDeleted } from "../socket";
 import type { Task } from "../types/task.types";
 
 interface CreateTaskInput {
@@ -39,7 +40,7 @@ export const createTask = async ({
   }
 
   if (assignee) {
-    const user = await UserModel.findOne({ email: assignee });
+    const user = await UserModel.findById(assignee);
     if (!user || !group.members.includes(assignee)) {
       throw new Error("Assignee not found or not in group");
     }
@@ -54,7 +55,19 @@ export const createTask = async ({
   });
 
   await task.save();
-  return task.toObject();
+  const savedTask = task.toObject({
+    transform: (doc, ret) => {
+      ret._id = ret._id.toString();
+      delete ret.__v;
+      if (ret.assignee && typeof ret.assignee === "object") {
+        ret.assignee._id = ret.assignee._id.toString();
+      }
+      return ret;
+    },
+  });
+
+  emitTaskCreated(savedTask);
+  return savedTask;
 };
 
 export const getTasks = async (
@@ -71,8 +84,66 @@ export const getTasks = async (
   const groupIds = groups.map((g) => g._id.toString());
   query.groupId = groupId ? groupId : { $in: groupIds };
 
-  const tasks = await TaskModel.find(query);
-  return tasks.map((t) => t.toObject());
+  const tasks = await TaskModel.find(query).populate(
+    "assignee",
+    "_id email username"
+  );
+
+  return tasks.map((t) =>
+    t.toObject({
+      transform: (doc, ret) => {
+        ret._id = ret._id.toString();
+        delete ret.__v;
+        if (ret.assignee && typeof ret.assignee === "object") {
+          ret.assignee._id = ret.assignee._id.toString();
+        }
+        return ret;
+      },
+    })
+  );
+};
+
+export const getTasksService = async (
+  userId: string,
+  groupId?: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<{ tasks: Task[]; totalPages: number; currentPage: number }> => {
+  const query: any = groupId ? { groupId } : {};
+
+  const groups = await GroupModel.find({
+    $or: [{ leader: userId }, { members: userId }],
+  });
+
+  //@ts-ignore
+  const groupIds = groups.map((g) => g._id.toString());
+  query.groupId = groupId ? groupId : { $in: groupIds };
+
+  const totalTasks = await TaskModel.countDocuments(query);
+  const totalPages = Math.ceil(totalTasks / limit);
+  const skip = (page - 1) * limit;
+
+  const tasks = await TaskModel.find(query)
+    .populate("assignee", "_id email username")
+    .skip(skip)
+    .limit(limit);
+
+  return {
+    tasks: tasks.map((t) =>
+      t.toObject({
+        transform: (doc, ret) => {
+          ret._id = ret._id.toString();
+          delete ret.__v;
+          if (ret.assignee && typeof ret.assignee === "object") {
+            ret.assignee._id = ret.assignee._id.toString();
+          }
+          return ret;
+        },
+      })
+    ),
+    totalPages,
+    currentPage: page,
+  };
 };
 
 export const updateTask = async (
@@ -115,8 +186,22 @@ export const updateTask = async (
 
   const updatedTask = await TaskModel.findByIdAndUpdate(id, updates, {
     new: true,
-  });
-  return updatedTask ? updatedTask.toObject() : null;
+  }).populate("assignee", "_id email username");
+  if (updatedTask) {
+    const transformedTask = updatedTask.toObject({
+      transform: (doc, ret) => {
+        ret._id = ret._id.toString();
+        delete ret.__v;
+        if (ret.assignee && typeof ret.assignee === "object") {
+          ret.assignee._id = ret.assignee._id.toString();
+        }
+        return ret;
+      },
+    });
+    emitTaskUpdated(transformedTask);
+    return transformedTask;
+  }
+  return null;
 };
 
 export const deleteTask = async (
@@ -134,5 +219,6 @@ export const deleteTask = async (
   }
 
   await TaskModel.findByIdAndDelete(id);
+  emitTaskDeleted(id, task.groupId);
   return true;
 };

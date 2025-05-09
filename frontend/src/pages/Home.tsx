@@ -1,13 +1,11 @@
-"use client";
-
 import { useState, useEffect } from "react";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import TaskList from "../components/tasks/TaskList";
 import TaskForm from "../components/tasks/TaskForm";
 import SearchFilterSort from "../components/tasks/SearchFilterSort";
 import GroupSelector from "../components/groups/GroupSelector";
 import { Button } from "../components/ui/button";
-// import { useToast } from "../components/ui/use-toast"
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -19,65 +17,62 @@ import { useNavigate } from "react-router-dom";
 import type { Task } from "../types/task.types";
 import type { Group } from "../types/group.types";
 import { getGroups, getTasks } from "@/api/test";
+import { listenForTaskUpdates, listenForGroupUpdates } from "../services/socket";
 
 export default function Home() {
   const navigate = useNavigate();
-  // const { toast } = useToast()
-  const [tasks, setTasks] = useState<Task[]>([
-    // {
-    //   _id: "1",
-    //   title: "Task 1",
-    //   description: "Description 1",
-    //   completed: false,
-    //   groupId: "g1",
-    //   assignee: "user1@example.com",
-    // },
-    // {
-    //   _id: "2",
-    //   title: "Task 2",
-    //   description: "Description 2",
-    //   completed: true,
-    //   groupId: "g1",
-    //   assignee: "user2@example.com",
-    // },
-    // {
-    //   _id: "3",
-    //   title: "Task 3",
-    //   description: "Description 3",
-    //   completed: false,
-    //   groupId: "g2",
-    //   assignee: "user3@example.com",
-    // },
-  ]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
-  const [filteredTasks, setFilteredTasks] = useState<Task[]>(tasks);
+  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<string>("");
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [search, setSearch] = useState("");
+  const [filterGroup, setFilterGroup] = useState("");
+  const [filterAssignee, setFilterAssignee] = useState("");
+  const [filterCompleted, setFilterCompleted] = useState("");
+  const [sortBy, setSortBy] = useState("");
+  const limit = 10;
 
-  useEffect(() => {
-    fetchDetails();
-    setFilteredTasks(tasks);
-  }, [tasks]);
+  const fetchTasks = async (page: number = 1) => {
+    try {
+      const response = await getTasks(
+        filterGroup || undefined,
+        page,
+        limit,
+        search,
+        filterAssignee || undefined,
+        filterCompleted === "completed" ? "true" : filterCompleted === "incomplete" ? "false" : undefined,
+        sortBy || undefined
+      );
+      setTasks(response.tasks);
+      setFilteredTasks(response.tasks);
+      setTotalPages(response.totalPages);
+      setCurrentPage(page);
+    } catch (error) {
+      toast.error("Failed to fetch tasks");
+    }
+  };
 
-  const fetchTasks = async () => {
-    setFilteredTasks(tasks);
-    return getTasks()
+  const fetchGroups = async () => {
+    try {
+      const userGroups = await getGroups();
+      setGroups(userGroups);
+    } catch (error) {
+      toast.error("Failed to fetch groups");
+    }
   };
 
   const fetchDetails = async () => {
-    const userGroups = await getGroups();
-    const allTasks = await getTasks()
-    setGroups(userGroups);
-    setTasks(allTasks);
+    await Promise.all([fetchTasks(currentPage), fetchGroups()]);
   };
 
   const handleGroupChange = (groupId: string) => {
     setSelectedGroup(groupId);
-    if (groupId) {
-      setFilteredTasks(tasks.filter((task) => task.groupId === groupId));
-    } else {
-      setFilteredTasks(tasks);
-    }
+    setFilterGroup(groupId);
+    setCurrentPage(1);
+    fetchTasks(1);
   };
 
   const handleCreateTask = () => {
@@ -86,12 +81,117 @@ export default function Home() {
 
   const handleTaskAdded = () => {
     setIsTaskFormOpen(false);
-    // toast({
-    //   title: "Task created",
-    //   description: "Your task has been successfully created",
-    // })
-    fetchTasks();
+    toast("Your task has been successfully created.");
+    fetchTasks(currentPage);
   };
+
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+    fetchTasks(page);
+  };
+
+  const handleSearchFilterSort = (
+    search: string,
+    filterGroup: string,
+    filterAssignee: string,
+    filterCompleted: string,
+    sortBy: string
+  ) => {
+    setSearch(search);
+    setFilterGroup(filterGroup);
+    setFilterAssignee(filterAssignee);
+    setFilterCompleted(filterCompleted);
+    setSortBy(sortBy);
+    setCurrentPage(1);
+    fetchTasks(1);
+  };
+
+  const matchesFilters = (task: Task) => {
+    const searchLower = search.toLowerCase();
+    const matchesSearch =
+      !search ||
+      task.title.toLowerCase().includes(searchLower) ||
+      (task.description && task.description.toLowerCase().includes(searchLower));
+    const matchesGroup = !filterGroup || task.groupId === filterGroup;
+    const matchesAssignee =
+      !filterAssignee ||
+      (task.assignee && task.assignee.email === filterAssignee);
+    const matchesCompleted =
+      !filterCompleted ||
+      task.completed === (filterCompleted === "completed");
+    return matchesSearch && matchesGroup && matchesAssignee && matchesCompleted;
+  };
+
+  useEffect(() => {
+    fetchDetails();
+
+    const unsubscribeTasks = listenForTaskUpdates(
+      (task) => {
+        if (matchesFilters(task)) {
+          setTasks((prev) => {
+            if (prev.some((t) => t._id === task._id)) return prev;
+            if (prev.length < limit) return [...prev, task];
+            return prev;
+          });
+          setFilteredTasks((prev) => {
+            if (prev.some((t) => t._id === task._id)) return prev;
+            if (prev.length < limit) return [...prev, task];
+            return prev;
+          });
+          toast.success(`New task "${task.title}" created`);
+        }
+      },
+      (task) => {
+        setTasks((prev) => prev.map((t) => (t._id === task._id ? task : t)));
+        if (matchesFilters(task)) {
+          setFilteredTasks((prev) =>
+            prev.map((t) => (t._id === task._id ? task : t))
+          );
+          toast.success(`Task "${task.title}" updated`);
+        } else if (filteredTasks.some((t) => t._id === task._id)) {
+          setFilteredTasks((prev) => prev.filter((t) => t._id !== task._id));
+        }
+      },
+      ({ taskId }) => {
+        setTasks((prev) => prev.filter((t) => t._id !== taskId));
+        setFilteredTasks((prev) => prev.filter((t) => t._id !== taskId));
+        toast.success("Task deleted");
+        if (filteredTasks.length === 1 && currentPage === totalPages) {
+          handlePageChange(currentPage > 1 ? currentPage - 1 : 1);
+        }
+      }
+    );
+
+    const unsubscribeGroups = listenForGroupUpdates(
+      (group) => {
+        setGroups((prev) => [...prev, group]);
+        toast.success(`New group "${group.name}" created`);
+      },
+      (group) => {
+        setGroups((prev) => prev.map((g) => (g._id === group._id ? group : g)));
+        toast.success(`Group "${group.name}" updated`);
+      },
+      ({ groupId }) => {
+        setGroups((prev) => prev.filter((g) => g._id !== groupId));
+        if (selectedGroup === groupId) {
+          setSelectedGroup("");
+          setFilterGroup("");
+          setFilteredTasks(tasks);
+        }
+        toast.success("Group deleted");
+      },
+      (group) => {
+        setGroups((prev) => prev.map((g) => (g._id === group._id ? group : g)));
+        toast.success(`Joined group "${group.name}"`);
+      }
+    );
+
+    return () => {
+      unsubscribeTasks?.();
+      unsubscribeGroups?.();
+    };
+  }, []);
 
   return (
     <div className="container mx-auto p-4 max-w-7xl">
@@ -115,35 +215,69 @@ export default function Home() {
         </div>
 
         <SearchFilterSort
-          tasks={tasks}
-          setFilteredTasks={setFilteredTasks}
+          onSearchFilterSort={handleSearchFilterSort}
           groups={groups}
           selectedGroup={selectedGroup}
         />
 
         <TaskList
           tasks={filteredTasks}
-          fetchTasks={fetchTasks}
+          fetchTasks={() => fetchTasks(currentPage)}
           groups={groups}
         />
 
-        <Dialog open={isTaskFormOpen} onOpenChange={setIsTaskFormOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Create New Task</DialogTitle>
-              <DialogDescription>
-                Add a new task to your project. Fill in the details below.
-              </DialogDescription>
-            </DialogHeader>
-            <TaskForm
-              fetchTasks={handleTaskAdded}
-              groups={groups}
-              initialGroupId={selectedGroup}
-              onCancel={() => setIsTaskFormOpen(false)}
-            />
-          </DialogContent>
-        </Dialog>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              Previous
+            </Button>
+            <div className="flex items-center gap-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handlePageChange(page)}
+                >
+                  {page}
+                </Button>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Next
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+        )}
       </div>
+
+      <Dialog open={isTaskFormOpen} onOpenChange={setIsTaskFormOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Create New Task</DialogTitle>
+            <DialogDescription>
+              Add a new task to your project. Fill in the details below.
+            </DialogDescription>
+          </DialogHeader>
+          <TaskForm
+            fetchTasks={handleTaskAdded}
+            groups={groups}
+            initialGroupId={selectedGroup}
+            onCancel={() => setIsTaskFormOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

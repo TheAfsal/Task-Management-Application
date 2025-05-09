@@ -21,3 +21,44 @@ export const sendInvite = async (req: Request, res: Response) => {
     res.status(500).json({ error: (error as Error).message });
   }
 };
+
+export const getPendingInvites = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    const invites = await inviteService.getPendingInvitesService(userId);
+    res.json(invites);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const acceptInvite = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const { inviteId } = req.params;
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    const group = await inviteService.acceptInviteService(inviteId, userId);
+    res.json(group);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const rejectInvite = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const { inviteId } = req.params;
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    await inviteService.rejectInviteService(inviteId, userId);
+    res.json({ message: "Invitation rejected" });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+};

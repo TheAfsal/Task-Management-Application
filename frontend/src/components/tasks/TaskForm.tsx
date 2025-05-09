@@ -42,14 +42,17 @@ export default function TaskForm({
       const selectedGroup = groups.find((g) => g._id === groupId);
       setAvailableMembers(selectedGroup?.members || []);
 
-      // if (assignee && !selectedGroup?.members.includes(assignee)) {
-      //   setAssignee("");
-      // }
+      if (
+        assignee &&
+        !availableMembers.find((details) => details._id === assignee)
+      ) {
+        setAssignee("");
+      }
     } else {
       setAvailableMembers([]);
       setAssignee("");
     }
-  }, [groupId, groups, assignee]);
+  }, [assignee, groupId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

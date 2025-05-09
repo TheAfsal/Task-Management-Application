@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -28,45 +26,69 @@ import GroupForm from "../components/groups/GroupForm";
 import GroupList from "../components/groups/GroupList";
 import InviteForm from "../components/groups/InviteForm";
 import JoinGroupForm from "../components/groups/JoinGroupForm";
-// import { useToast } from "../components/ui/use-toast"
+import { toast } from "sonner";
 import type { Group } from "../types/group.types";
+// import type { Invite } from "../types/invite.types";
 import { getGroups } from "@/api/test";
+import { listenForGroupUpdates } from "../services/socket";
 
 export default function Groups() {
   const navigate = useNavigate();
-  //   const { toast } = useToast()
   const [groups, setGroups] = useState<Group[]>([]);
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
 
   const fetchGroups = async () => {
-    const userGroups = await getGroups();
-    setGroups(userGroups);
+    try {
+      const userGroups = await getGroups();
+      setGroups(userGroups);
+    } catch (error) {
+      toast.error("Failed to fetch groups");
+    }
   };
 
   useEffect(() => {
-    const fetchGroups = async () => {
-      const userGroups = await getGroups();
-      setGroups(userGroups);
-    };
     fetchGroups();
+
+    const unsubscribeGroups = listenForGroupUpdates(
+      (group) => {
+        setGroups((prev) => [...prev, group]);
+        toast.success(`New group "${group.name}" created`);
+      },
+      (group) => {
+        setGroups((prev) => prev.map((g) => (g._id === group._id ? group : g)));
+        toast.success(`Group "${group.name}" updated`);
+      },
+      ({ groupId }) => {
+        setGroups((prev) => prev.filter((g) => g._id !== groupId));
+        toast.success("Group deleted");
+      },
+      (group) => {
+        setGroups((prev) => prev.map((g) => (g._id === group._id ? group : g)));
+        toast.success(`Joined group "${group.name}"`);
+      }
+    );
+
+    // const unsubscribeInvites = listenForInviteUpdates((invite: Invite) => {
+    //   toast.success(`Invitation sent to ${invite.email} for group ${invite.groupId}`);
+    //   fetchGroups(); // Refresh groups to reflect potential changes
+    // });
+
+    return () => {
+      unsubscribeGroups?.();
+      // unsubscribeInvites?.();
+    };
   }, []);
 
   const handleGroupCreated = () => {
     setIsCreateGroupOpen(false);
-    // toast({
-    //   title: "Group created",
-    //   description: "Your group has been successfully created",
-    // })
+    toast("Your group has been successfully created.");
     fetchGroups();
   };
 
   const handleInviteSent = () => {
     setIsInviteOpen(false);
-    // toast({
-    //   title: "Invitation sent",
-    //   description: "Your invitation has been sent successfully",
-    // })
+    toast("Your invitation has been sent successfully.");
     fetchGroups();
   };
 

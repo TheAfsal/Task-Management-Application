@@ -15,7 +15,7 @@ export const register = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Email already exists' });
     }
 
-    const user = new User({ name, email, password });
+    const user = new User({ username:name, email, password });
     await user.save();
 
     const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET!, { expiresIn: '1h' });

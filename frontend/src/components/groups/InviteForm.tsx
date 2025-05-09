@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import type { InviteFormProps } from "@/types/invite.types";
+import { postInvite } from "@/api/test";
 
 
 
@@ -31,9 +32,7 @@ export default function InviteForm({
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      console.log("Inviting user:", email, "to group:", groupId);
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate network delay
+      await postInvite({email,groupId})
       setEmail("");
       setGroupId("");
       fetchGroups();

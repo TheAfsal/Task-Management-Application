@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom"
-// import { Toaster } from "./components/ui/toaster"
+import { Toaster } from "./components/ui/sonner"
 import { ThemeProvider } from "./components/theme-provider"
 import Login from "./components/Login"
 import Register from "./components/Register"
@@ -39,7 +39,7 @@ function App() {
         />
         <Route path="*" element={<Navigate to={isAuthenticated ? "/" : "/login"} />} />
       </Routes>
-      {/* <Toaster /> */}
+      <Toaster />
     </ThemeProvider>
   )
 }

@@ -29,19 +29,19 @@ export const createTask = async (req: Request, res: Response) => {
 export const getTasks = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
-    const { groupId } = req.query;
-
+    const { groupId, page = "1", limit = "10" } = req.query;
     if (!userId) {
-      return res.status(401).json({ error: "User not authenticated" });
+      return res.status(401).json({ error: "Unauthorized" });
     }
-
-    const tasks = await taskService.getTasks(
+    const tasks = await taskService.getTasksService(
       userId,
-      groupId ? groupId.toString() : undefined
+      groupId as string | undefined,
+      parseInt(page as string, 10),
+      parseInt(limit as string, 10)
     );
     res.json(tasks);
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
 };
 

@@ -1,81 +1,50 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { Search, Filter, SortAsc } from "lucide-react"
-import { Input } from "../ui/input"
-import { Button } from "../ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
-import { Card, CardContent } from "../ui/card"
-import type { Task } from "../../types/task.types"
-import type { Group } from "../../types/group.types"
+import { useState, useEffect } from "react";
+import { Search, Filter, SortAsc } from "lucide-react";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Card, CardContent } from "../ui/card";
+import type { Group } from "../../types/group.types";
 
 interface SearchFilterSortProps {
-  tasks: Task[]
-  setFilteredTasks: (tasks: Task[]) => void
-  groups: Group[]
-  selectedGroup?: string
+  onSearchFilterSort: (
+    search: string,
+    filterGroup: string,
+    filterAssignee: string,
+    filterCompleted: string,
+    sortBy: string
+  ) => void;
+  groups: Group[];
+  selectedGroup: string;
 }
 
 export default function SearchFilterSort({
-  tasks,
-  setFilteredTasks,
+  onSearchFilterSort,
   groups,
-  selectedGroup = "",
+  selectedGroup,
 }: SearchFilterSortProps) {
-  const [search, setSearch] = useState("")
-  const [filterGroup, setFilterGroup] = useState(selectedGroup)
-  const [filterAssignee, setFilterAssignee] = useState("")
-  const [filterCompleted, setFilterCompleted] = useState("")
-  const [sortBy, setSortBy] = useState("")
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const [isSortOpen, setIsSortOpen] = useState(false)
+  const [search, setSearch] = useState("");
+  const [filterGroup, setFilterGroup] = useState(selectedGroup);
+  const [filterAssignee, setFilterAssignee] = useState("");
+  const [filterCompleted, setFilterCompleted] = useState("");
+  const [sortBy, setSortBy] = useState("");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isSortOpen, setIsSortOpen] = useState(false);
 
-  // Update filter when selectedGroup changes
   useEffect(() => {
-    setFilterGroup(selectedGroup)
-  }, [selectedGroup])
+    setFilterGroup(selectedGroup);
+    onSearchFilterSort(search, selectedGroup, filterAssignee, filterCompleted, sortBy);
+  }, [selectedGroup]);
 
-  // Apply filters and sorting
   useEffect(() => {
-    let filtered = tasks
+    onSearchFilterSort(search, filterGroup, filterAssignee, filterCompleted, sortBy);
+  }, [search, filterGroup, filterAssignee, filterCompleted, sortBy]);
 
-    if (search) {
-      filtered = filtered.filter(
-        (task) =>
-          task.title.toLowerCase().includes(search.toLowerCase()) ||
-          (task.description?.toLowerCase() || "").includes(search.toLowerCase()),
-      )
-    }
-
-    if (filterGroup) {
-      filtered = filtered.filter((task) => task.groupId === filterGroup)
-    }
-
-    if (filterAssignee) {
-      filtered = filtered.filter((task) => task.assignee === filterAssignee)
-    }
-
-    if (filterCompleted) {
-      filtered = filtered.filter((task) => task.completed === (filterCompleted === "completed"))
-    }
-
-    if (sortBy) {
-      filtered = [...filtered].sort((a, b) => {
-        if (sortBy === "title") return a.title.localeCompare(b.title)
-        if (sortBy === "completed") {
-          if (a.completed === b.completed) return 0
-          return a.completed ? -1 : 1
-        }
-        return 0
-      })
-    }
-
-    setFilteredTasks(filtered)
-  }, [search, filterGroup, filterAssignee, filterCompleted, sortBy, tasks, setFilteredTasks])
-
-  // Get all unique members from groups
-  const allMembers = Array.from(new Set(groups.flatMap((g) => g.members)))
+  const allMembers = Array.from(
+    new Set(
+      groups.flatMap((g) => g.members.map((m) => JSON.stringify(m))),
+    )).map((m) => JSON.parse(m));
 
   return (
     <Card>
@@ -110,7 +79,7 @@ export default function SearchFilterSort({
                         <SelectValue placeholder="All Groups" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Groups</SelectItem>
+                        <SelectItem value="">All Groups</SelectItem>
                         {groups.map((group) => (
                           <SelectItem key={group._id} value={group._id}>
                             {group.name}
@@ -127,7 +96,7 @@ export default function SearchFilterSort({
                         <SelectValue placeholder="All Assignees" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Assignees</SelectItem>
+                        <SelectItem value="">All Assignees</SelectItem>
                         {allMembers.map((member) => (
                           <SelectItem key={member._id} value={member.email}>
                             {member.username}
@@ -144,7 +113,7 @@ export default function SearchFilterSort({
                         <SelectValue placeholder="All" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="">All</SelectItem>
                         <SelectItem value="completed">Completed</SelectItem>
                         <SelectItem value="incomplete">Incomplete</SelectItem>
                       </SelectContent>
@@ -156,10 +125,10 @@ export default function SearchFilterSort({
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        setFilterGroup(selectedGroup)
-                        setFilterAssignee("")
-                        setFilterCompleted("")
-                        setIsFilterOpen(false)
+                        setFilterGroup(selectedGroup);
+                        setFilterAssignee("");
+                        setFilterCompleted("");
+                        setIsFilterOpen(false);
                       }}
                     >
                       Reset Filters
@@ -187,7 +156,7 @@ export default function SearchFilterSort({
                         <SelectValue placeholder="None" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
+                        <SelectItem value="">None</SelectItem>
                         <SelectItem value="title">Title</SelectItem>
                         <SelectItem value="completed">Completion Status</SelectItem>
                       </SelectContent>
@@ -199,8 +168,8 @@ export default function SearchFilterSort({
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        setSortBy("")
-                        setIsSortOpen(false)
+                        setSortBy("");
+                        setIsSortOpen(false);
                       }}
                     >
                       Reset Sort
@@ -213,5 +182,5 @@ export default function SearchFilterSort({
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

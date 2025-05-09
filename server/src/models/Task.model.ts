@@ -8,8 +8,8 @@ const TaskSchema = new Schema<ITask>(
     title: { type: String, required: true },
     description: { type: String },
     completed: { type: Boolean, default: false },
-    groupId: { type: String, required: true },
-    assignee: { type: String },
+    groupId: { type: String, ref:"Group", required: true },
+    assignee: { type: String, ref:"User", default: null  },
   },
   { timestamps: true }
 );

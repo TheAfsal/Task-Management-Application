@@ -1,6 +1,12 @@
 import GroupModel from "../models/Group.model";
 import InviteModel from "../models/Invite.model";
 import UserModel from "../models/User.model";
+import {
+  emitGroupCreated,
+  emitGroupUpdated,
+  emitGroupDeleted,
+  emitGroupJoined,
+} from "../socket";
 import type { Group } from "../types/group.types";
 
 interface CreateGroupInput {
@@ -34,7 +40,20 @@ export const createGroup = async ({
   });
 
   await group.save();
-  return group.toObject();
+  await group
+    .populate("leader", "_id email username")
+    //@ts-ignore
+    .populate("members", "_id email username");
+  const savedGroup = group.toObject({
+    transform: (doc, ret) => {
+      ret._id = ret._id.toString();
+      delete ret.__v;
+      return ret;
+    },
+  });
+
+  emitGroupCreated(savedGroup);
+  return savedGroup;
 };
 
 export const getGroups = async (userId: string): Promise<Group[]> => {
@@ -44,14 +63,14 @@ export const getGroups = async (userId: string): Promise<Group[]> => {
     .populate("leader", "_id email username")
     .populate("members", "_id email username");
 
-  console.log(groups);
-    
   return groups.map((g) =>
-    g.toObject({ transform: (doc, ret) => {
-      ret._id = ret._id.toString();
-      delete ret.__v;
-      return ret;
-    } })
+    g.toObject({
+      transform: (doc, ret) => {
+        ret._id = ret._id.toString();
+        delete ret.__v;
+        return ret;
+      },
+    })
   );
 };
 
@@ -85,8 +104,21 @@ export const updateGroup = async (
 
   const updatedGroup = await GroupModel.findByIdAndUpdate(id, updates, {
     new: true,
-  });
-  return updatedGroup ? updatedGroup.toObject() : null;
+  })
+    .populate("leader", "_id email username")
+    .populate("members", "_id email username");
+  if (updatedGroup) {
+    const transformedGroup = updatedGroup.toObject({
+      transform: (doc, ret) => {
+        ret._id = ret._id.toString();
+        delete ret.__v;
+        return ret;
+      },
+    });
+    emitGroupUpdated(transformedGroup);
+    return transformedGroup;
+  }
+  return null;
 };
 
 export const deleteGroup = async (
@@ -104,6 +136,7 @@ export const deleteGroup = async (
 
   await GroupModel.findByIdAndDelete(id);
   await InviteModel.deleteMany({ groupId: id });
+  emitGroupDeleted(id);
   return true;
 };
 
@@ -116,9 +149,14 @@ export const joinGroup = async (
     return null;
   }
 
+  const user = await UserModel.findById(userId);
+  if (!user) {
+    return null;
+  }
+
   const invite = await InviteModel.findOne({
     groupId,
-    email: userId,
+    email: user.email,
     status: "pending",
   });
 
@@ -135,6 +173,16 @@ export const joinGroup = async (
 
   await group.save();
   await invite.save();
+  await group
+    .populate("leader", "_id email username")
+  const savedGroup = group.toObject({
+    transform: (doc, ret) => {
+      ret._id = ret._id.toString();
+      delete ret.__v;
+      return ret;
+    },
+  });
 
-  return group.toObject();
+  emitGroupJoined(savedGroup);
+  return savedGroup;
 };

@@ -70,7 +70,7 @@ export default function TaskEditForm({
         assignee,
         completed,
       });
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate network delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
       setEditingTask(null);
       fetchTasks();
     } catch (error) {
@@ -122,7 +122,7 @@ export default function TaskEditForm({
           </Select>
         </div>
 
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <Label htmlFor="assignee">Assignee</Label>
           <Select
             value={assignee}
@@ -140,7 +140,7 @@ export default function TaskEditForm({
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </div> */}
       </div>
 
       <div className="flex items-center space-x-2">

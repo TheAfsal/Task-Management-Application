@@ -1,7 +1,7 @@
 import type { Task } from "../types/task.types";
 import type { Group } from "../types/group.types";
-// import type { Invite } from "../types/invite.types";
 import api from "./axiosInstance";
+import type { Invite } from "@/types/invite.types";
 
 // Tasks: Create a new task
 export const postTask = async (data: Omit<Task, "_id" | "createdAt" | "updatedAt">): Promise<Task> => {
@@ -15,14 +15,19 @@ export const postTask = async (data: Omit<Task, "_id" | "createdAt" | "updatedAt
 };
 
 // Tasks: Get all tasks (optionally filtered by groupId)
-export const getTasks = async (groupId?: string): Promise<Task[]> => {
-  try {
-    const response = await api.get("/tasks", { params: { groupId } });
-    return response.data;
-  } catch (error) {
-    console.error("Failed to fetch tasks:", error);
-    throw error;
-  }
+export const getTasks = async (
+  groupId?: string,
+  page: number = 1,
+  limit: number = 10,
+  search?: string,
+  assignee?: string,
+  completed?: string,
+  sortBy?: string
+): Promise<{ tasks: Task[]; totalPages: number; currentPage: number }> => {
+  const response = await api.get("/tasks", {
+    params: { groupId, page, limit, search, assignee, completed, sortBy },
+  });
+  return response.data;
 };
 
 // Tasks: Update a task
@@ -115,4 +120,17 @@ export const postInvite = async (
     console.error("Failed to post invite:", error);
     throw error;
   }
+};
+
+export const getPendingInvites = async (): Promise<Invite[]> => {
+  const response = await api.get("/invites/pending");
+  return response.data;
+};
+
+export const acceptInvite = async (inviteId: string): Promise<void> => {
+  await api.post(`/invites/accept/${inviteId}`);
+};
+
+export const rejectInvite = async (inviteId: string): Promise<void> => {
+  await api.post(`/invites/reject/${inviteId}`);
 };

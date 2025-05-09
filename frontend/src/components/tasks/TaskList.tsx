@@ -1,34 +1,57 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../ui/card"
-import { Button } from "../ui/button"
-import { Checkbox } from "../ui/checkbox"
-import { Badge } from "../ui/badge"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu"
-import { MoreHorizontal, Pencil, Trash2, CheckCircle2, XCircle, User } from "lucide-react"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
+import { Button } from "../ui/button";
+import { Checkbox } from "../ui/checkbox";
+import { Badge } from "../ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import {
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  CheckCircle2,
+  XCircle,
+  User,
+} from "lucide-react";
 // import { useToast } from "../ui/use-toast"
-import TaskEditForm from "./TaskEditForm"
-import type { Task } from "../../types/task.types"
-import type { Group } from "../../types/group.types"
+import TaskEditForm from "./TaskEditForm";
+import type { Task } from "../../types/task.types";
+import type { Group } from "../../types/group.types";
+import { deleteTask, updateTask } from "@/api/test";
 
 interface TaskListProps {
-  tasks: Task[]
-  fetchTasks: () => Promise<void>
-  groups: Group[]
+  tasks: Task[];
+  fetchTasks: () => Promise<void>;
+  groups: Group[];
 }
 
 export default function TaskList({ tasks, fetchTasks, groups }: TaskListProps) {
   // const { toast } = useToast()
-  const [editingTask, setEditingTask] = useState<Task | null>(null)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const handleDelete = async (id: string) => {
     try {
-      // Simulate API call
-      console.log("Deleting task:", id)
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      await deleteTask(id);
 
       // toast({
       //   title: "Task deleted",
@@ -36,59 +59,60 @@ export default function TaskList({ tasks, fetchTasks, groups }: TaskListProps) {
       //   variant: "destructive",
       // })
 
-      fetchTasks()
+      fetchTasks();
     } catch (error) {
-      console.error("Error deleting task:", error)
+      console.error("Error deleting task:", error);
     }
-  }
+  };
 
   const handleToggle = async (id: string, completed: boolean) => {
     try {
       // Simulate API call
-      console.log("Toggling task:", id, !completed)
-      await new Promise((resolve) => setTimeout(resolve, 300)) // Simulate network delay
-
+      console.log("Toggling task:", id, !completed);
+      await updateTask(id, { completed: !completed });
       // toast({
       //   title: completed ? "Task marked as incomplete" : "Task completed",
       //   description: completed ? "The task has been marked as incomplete" : "The task has been marked as complete",
       // })
 
-      fetchTasks()
+      fetchTasks();
     } catch (error) {
-      console.error("Error updating task:", error)
+      console.error("Error updating task:", error);
     }
-  }
+  };
 
   const handleEdit = (task: Task) => {
-    setEditingTask(task)
-    setIsEditDialogOpen(true)
-  }
+    setEditingTask(task);
+    setIsEditDialogOpen(true);
+  };
 
   const handleTaskUpdated = () => {
-    setIsEditDialogOpen(false)
-    setEditingTask(null)
+    setIsEditDialogOpen(false);
+    setEditingTask(null);
 
     // toast({
     //   title: "Task updated",
     //   description: "The task has been successfully updated",
     // })
 
-    fetchTasks()
-  }
+    fetchTasks();
+  };
 
   const getGroupName = (groupId: string) => {
-    return groups.find((g) => g._id === groupId)?.name || "Unknown Group"
-  }
+    return groups.find((g) => g._id === groupId)?.name || "Unknown Group";
+  };
 
   if (tasks.length === 0) {
     return (
       <Card className="border-dashed">
         <CardContent className="pt-6 text-center">
           <CheckCircle2 className="mx-auto h-12 w-12 text-muted-foreground" />
-          <p className="mt-2 text-sm text-muted-foreground">No tasks found. Create a new task to get started.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            No tasks found. Create a new task to get started.
+          </p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -104,7 +128,11 @@ export default function TaskList({ tasks, fetchTasks, groups }: TaskListProps) {
                 className="mt-1"
               />
               <div>
-                <CardTitle className={`text-lg ${task.completed ? "line-through text-muted-foreground" : ""}`}>
+                <CardTitle
+                  className={`text-lg ${
+                    task.completed ? "line-through text-muted-foreground" : ""
+                  }`}
+                >
                   {task.title}
                 </CardTitle>
                 {task.groupId && (
@@ -126,7 +154,9 @@ export default function TaskList({ tasks, fetchTasks, groups }: TaskListProps) {
                   <Pencil className="mr-2 h-4 w-4" />
                   Edit
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleToggle(task._id, task.completed)}>
+                <DropdownMenuItem
+                  onClick={() => handleToggle(task._id, task.completed)}
+                >
                   {task.completed ? (
                     <>
                       <XCircle className="mr-2 h-4 w-4" />
@@ -152,7 +182,13 @@ export default function TaskList({ tasks, fetchTasks, groups }: TaskListProps) {
 
           {task.description && (
             <CardContent className="pb-2">
-              <p className={`text-sm ${task.completed ? "text-muted-foreground" : ""}`}>{task.description}</p>
+              <p
+                className={`text-sm ${
+                  task.completed ? "text-muted-foreground" : ""
+                }`}
+              >
+                {task.description}
+              </p>
             </CardContent>
           )}
 
@@ -160,7 +196,7 @@ export default function TaskList({ tasks, fetchTasks, groups }: TaskListProps) {
             <CardFooter className="pt-0">
               <div className="flex items-center text-xs text-muted-foreground">
                 <User className="mr-1 h-3 w-3" />
-                {task.assignee}
+                {task.assignee.username}
               </div>
             </CardFooter>
           )}
@@ -171,7 +207,9 @@ export default function TaskList({ tasks, fetchTasks, groups }: TaskListProps) {
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Edit Task</DialogTitle>
-            <DialogDescription>Make changes to your task here.</DialogDescription>
+            <DialogDescription>
+              Make changes to your task here.
+            </DialogDescription>
           </DialogHeader>
           {editingTask && (
             <TaskEditForm
@@ -185,5 +223,5 @@ export default function TaskList({ tasks, fetchTasks, groups }: TaskListProps) {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
