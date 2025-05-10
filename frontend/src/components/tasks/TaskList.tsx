@@ -52,13 +52,6 @@ export default function TaskList({ tasks, fetchTasks, groups }: TaskListProps) {
   const handleDelete = async (id: string) => {
     try {
       await deleteTask(id);
-
-      // toast({
-      //   title: "Task deleted",
-      //   description: "The task has been successfully deleted",
-      //   variant: "destructive",
-      // })
-
       fetchTasks();
     } catch (error) {
       console.error("Error deleting task:", error);
@@ -67,14 +60,7 @@ export default function TaskList({ tasks, fetchTasks, groups }: TaskListProps) {
 
   const handleToggle = async (id: string, completed: boolean) => {
     try {
-      // Simulate API call
-      console.log("Toggling task:", id, !completed);
       await updateTask(id, { completed: !completed });
-      // toast({
-      //   title: completed ? "Task marked as incomplete" : "Task completed",
-      //   description: completed ? "The task has been marked as incomplete" : "The task has been marked as complete",
-      // })
-
       fetchTasks();
     } catch (error) {
       console.error("Error updating task:", error);

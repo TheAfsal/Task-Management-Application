@@ -182,8 +182,14 @@ export default function Home() {
         toast.success("Group deleted");
       },
       (group) => {
-        setGroups((prev) => prev.map((g) => (g._id === group._id ? group : g)));
-        toast.success(`Joined group "${group.name}"`);
+        setGroups((prev) => {
+          if (prev.some((g) => g._id === group._id)) {
+            return prev.map((g) => (g._id === group._id ? group : g));
+          }
+          return [...prev, group];
+        });
+        toast.success(`User joined group "${group.name}"`);
+        fetchTasks(currentPage); // Refresh tasks to include new group's tasks
       }
     );
 
@@ -192,6 +198,8 @@ export default function Home() {
       unsubscribeGroups?.();
     };
   }, []);
+
+  
 
   return (
     <div className="container mx-auto p-4 max-w-7xl">

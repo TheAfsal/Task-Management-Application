@@ -28,13 +28,14 @@ import InviteForm from "../components/groups/InviteForm";
 import JoinGroupForm from "../components/groups/JoinGroupForm";
 import { toast } from "sonner";
 import type { Group } from "../types/group.types";
-// import type { Invite } from "../types/invite.types";
-import { getGroups } from "@/api/test";
-import { listenForGroupUpdates } from "../services/socket";
+import type { Invite } from "../types/invite.types";
+import { getGroups, getPendingInvites } from "@/api/test";
+import { listenForGroupUpdates, listenForInviteUpdates } from "../services/socket";
 
 export default function Groups() {
   const navigate = useNavigate();
   const [groups, setGroups] = useState<Group[]>([]);
+  const [pendingInvites, setPendingInvites] = useState<Invite[]>([]);
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
 
@@ -47,8 +48,18 @@ export default function Groups() {
     }
   };
 
+  const fetchPendingInvites = async () => {
+    try {
+      const invites = await getPendingInvites();
+      setPendingInvites(invites);
+    } catch (error) {
+      toast.error("Failed to fetch pending invites");
+    }
+  };
+
   useEffect(() => {
     fetchGroups();
+    fetchPendingInvites();
 
     const unsubscribeGroups = listenForGroupUpdates(
       (group) => {
@@ -64,19 +75,26 @@ export default function Groups() {
         toast.success("Group deleted");
       },
       (group) => {
-        setGroups((prev) => prev.map((g) => (g._id === group._id ? group : g)));
-        toast.success(`Joined group "${group.name}"`);
+        setGroups((prev) => {
+          if (prev.some((g) => g._id === group._id)) {
+            return prev.map((g) => (g._id === group._id ? group : g));
+          }
+          return [...prev, group];
+        });
+        toast.success(`User joined group "${group.name}"`);
+        fetchPendingInvites(); // Refresh invites after joining
       }
     );
 
-    // const unsubscribeInvites = listenForInviteUpdates((invite: Invite) => {
-    //   toast.success(`Invitation sent to ${invite.email} for group ${invite.groupId}`);
-    //   fetchGroups(); // Refresh groups to reflect potential changes
-    // });
+    const unsubscribeInvites = listenForInviteUpdates((invite: Invite) => {
+      setPendingInvites((prev) => [...prev, invite]);
+      toast.success(`Received invitation to join group (ID: ${invite.groupId})`);
+      fetchGroups(); // Refresh groups in case of new group data
+    });
 
     return () => {
       unsubscribeGroups?.();
-      // unsubscribeInvites?.();
+      unsubscribeInvites?.();
     };
   }, []);
 
@@ -90,6 +108,7 @@ export default function Groups() {
     setIsInviteOpen(false);
     toast("Your invitation has been sent successfully.");
     fetchGroups();
+    fetchPendingInvites();
   };
 
   return (
@@ -139,7 +158,7 @@ export default function Groups() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <JoinGroupForm fetchGroups={fetchGroups} />
+                <JoinGroupForm fetchGroups={fetchGroups} invites={pendingInvites} />
               </CardContent>
             </Card>
           </TabsContent>

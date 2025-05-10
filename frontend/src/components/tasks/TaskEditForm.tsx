@@ -17,6 +17,7 @@ import {
 import { Checkbox } from "../ui/checkbox";
 import type { Task } from "../../types/task.types";
 import type { Group } from "../../types/group.types";
+import { updateTask } from "@/api/test";
 
 interface TaskEditFormProps {
   task: Task;
@@ -62,15 +63,21 @@ export default function TaskEditForm({
 
     try {
       // Simulate API call
-      console.log("Updating task:", {
-        _id: task._id,
+      // console.log("Updating task:", {
+      //   _id: task._id,
+      //   title,
+      //   description,
+      //   groupId,
+      //   assignee,
+      //   completed,
+      // });
+      await updateTask(task._id, {
         title,
         description,
         groupId,
-        assignee,
+        //  assignee,
         completed,
       });
-      await new Promise((resolve) => setTimeout(resolve, 500));
       setEditingTask(null);
       fetchTasks();
     } catch (error) {

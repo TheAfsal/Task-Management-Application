@@ -1,6 +1,7 @@
 import { Server, Socket } from "socket.io";
 import jwt from "jsonwebtoken";
 import GroupModel from "./models/Group.model";
+import UserModel from "./models/User.model";
 import type { Task } from "./types/task.types";
 import type { Group } from "./types/group.types";
 import type { Invite } from "./types/invite.types";
@@ -36,6 +37,9 @@ const initializeSocket = (io: Server) => {
         socket.join(group._id.toString());
       }
 
+      // Join a room for the user's own ID (for personal notifications like invites)
+      socket.join(decoded.userId);
+
       next();
     } catch (error) {
       next(new Error("Authentication error: Invalid token"));
@@ -66,10 +70,8 @@ export const emitTaskDeleted = (taskId: string, groupId: string) => {
 
 // Emit group-related events
 export const emitGroupCreated = (group: Group) => {
-  group.members.forEach((member) => {
-    //@ts-ignore
-    ioInstance.to(group._id.toString()).emit("group:created", group);
-  });
+  //@ts-ignore
+  ioInstance.to(group._id.toString()).emit("group:created", group);
 };
 
 export const emitGroupUpdated = (group: Group) => {
@@ -87,8 +89,12 @@ export const emitGroupJoined = (group: Group) => {
 };
 
 // Emit invite-related events
-export const emitInviteSent = (invite: Invite) => {
-  ioInstance.to(invite.groupId).emit("invite:sent", invite);
+export const emitInviteSent = async (invite: Invite) => {
+  const user = await UserModel.findOne({ email: invite.email });
+  if (user) {
+    //@ts-ignore
+    ioInstance.to(user._id.toString()).emit("invite:sent", invite);
+  }
 };
 
 export default initializeSocket;

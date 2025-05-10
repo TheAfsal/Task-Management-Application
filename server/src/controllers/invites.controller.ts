@@ -45,6 +45,7 @@ export const acceptInvite = async (req: Request, res: Response) => {
     const group = await inviteService.acceptInviteService(inviteId, userId);
     res.json(group);
   } catch (error: any) {
+    console.log(error);
     res.status(400).json({ error: error.message });
   }
 };

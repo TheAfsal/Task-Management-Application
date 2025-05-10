@@ -3,7 +3,7 @@ import GroupModel from "../models/Group.model";
 import UserModel from "../models/User.model";
 import { emitGroupJoined, emitInviteSent } from "../socket";
 import type { Invite } from "../types/invite.types";
-import { Group } from "types/group.types";
+import type { Group } from "../types/group.types";
 
 interface SendInviteInput {
   email: string;
@@ -21,7 +21,7 @@ export const sendInvite = async ({
     throw new Error("Group not found");
   }
 
-  if (group.leader !== userId) {
+  if (group.leader.toString() !== userId) {
     throw new Error("Only the group leader can send invitations");
   }
 
@@ -30,7 +30,8 @@ export const sendInvite = async ({
     throw new Error("User not found");
   }
 
-  if (group.members.includes(email)) {
+  //@ts-ignore
+  if (group.members.some((memberId) => memberId.toString() === user._id.toString())) {
     throw new Error("User already in group");
   }
 
@@ -105,7 +106,7 @@ export const acceptInviteService = async (
     throw new Error("Group not found");
   }
 
-  if (group.members.includes(userId)) {
+  if (group.members.some((memberId) => memberId.toString() === userId)) {
     throw new Error("User already in group");
   }
 
@@ -115,19 +116,29 @@ export const acceptInviteService = async (
   await group.save();
   await invite.save();
 
-  await group
-    .populate("leader", "_id email username")
-    // .populate("members", "_id email username");
-  const savedGroup = group.toObject({
-    transform: (doc, ret) => {
-      ret._id = ret._id.toString();
-      delete ret.__v;
-      return ret;
-    },
-  });
+  await group.populate("leader", "_id email username");
+  await group.populate("members", "_id email username");
 
-  emitGroupJoined(savedGroup);
-  return savedGroup;
+  console.log("@@ group", group);
+
+  // const savedGroup = group.toObject({
+  //   transform: (doc, ret) => {
+
+  //     console.log("@@ ret",ret);
+      
+  //     ret._id = ret._id.toString();
+  //     ret.leader._id = ret.leader._id.toString();
+  //     ret.members = ret.members.map((m: any) => ({
+  //       ...m,
+  //       _id: m._id.toString(),
+  //     }));
+  //     delete ret.__v;
+  //     return ret;
+  //   },
+  // });
+
+  emitGroupJoined(group);
+  return group;
 };
 
 export const rejectInviteService = async (

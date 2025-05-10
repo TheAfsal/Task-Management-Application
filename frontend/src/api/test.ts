@@ -1,10 +1,10 @@
-import type { Task } from "../types/task.types";
+import type { Task, TaskSubmitForm } from "../types/task.types";
 import type { Group } from "../types/group.types";
 import api from "./axiosInstance";
 import type { Invite } from "@/types/invite.types";
 
 // Tasks: Create a new task
-export const postTask = async (data: Omit<Task, "_id" | "createdAt" | "updatedAt">): Promise<Task> => {
+export const postTask = async (data: TaskSubmitForm ): Promise<Task> => {
   try {
     const response = await api.post("/tasks", data);
     return response.data;
