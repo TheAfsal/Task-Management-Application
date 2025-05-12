@@ -43,7 +43,7 @@ export const createGroup = async ({
   await group
     .populate("leader", "_id email username")
     //@ts-ignore
-    .populate("members", "_id email username");
+    // .populate("members", "_id email username");
   const savedGroup = group.toObject({
     transform: (doc, ret) => {
       ret._id = ret._id.toString();
