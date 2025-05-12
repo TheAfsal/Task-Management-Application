@@ -198,7 +198,7 @@ export default function Home() {
           return [...prev, group];
         });
         toast.success(`User joined group "${group.name}"`);
-        fetchTasks(currentPage); // Refresh tasks to include new group's tasks
+        fetchTasks(currentPage);
       }
     );
 
@@ -211,9 +211,9 @@ export default function Home() {
   return (
     <div className="container mx-auto p-4 max-w-7xl">
       <div className="flex flex-col space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold text-primary">Tasks Dashboard</h1>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
             <GroupSelector
               groups={groups}
               selectedGroup={selectedGroup}
