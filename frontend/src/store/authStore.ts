@@ -12,7 +12,7 @@ interface AuthState {
   refreshAccessToken: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   accessToken: null,
   user: null,
