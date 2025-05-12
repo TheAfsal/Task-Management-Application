@@ -7,7 +7,8 @@ export const sendInvite = async (req: Request, res: Response) => {
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ error: "User not authenticated" });
+      res.status(401).json({ error: "User not authenticated" });
+      return
     }
 
     const invite = await inviteService.sendInvite({
@@ -26,7 +27,8 @@ export const getPendingInvites = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
     if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
+      res.status(401).json({ error: "Unauthorized" });
+      return
     }
     const invites = await inviteService.getPendingInvitesService(userId);
     res.json(invites);
@@ -40,7 +42,8 @@ export const acceptInvite = async (req: Request, res: Response) => {
     const userId = req.user?.userId;
     const { inviteId } = req.params;
     if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
+      res.status(401).json({ error: "Unauthorized" });
+      return
     }
     const group = await inviteService.acceptInviteService(inviteId, userId);
     res.json(group);
@@ -55,7 +58,8 @@ export const rejectInvite = async (req: Request, res: Response) => {
     const userId = req.user?.userId;
     const { inviteId } = req.params;
     if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
+      res.status(401).json({ error: "Unauthorized" });
+      return
     }
     await inviteService.rejectInviteService(inviteId, userId);
     res.json({ message: "Invitation rejected" });

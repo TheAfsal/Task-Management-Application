@@ -2,13 +2,22 @@ import { Request, Response } from "express";
 import * as groupService from "../services/groups.service";
 import { Types } from "mongoose";
 
+declare global {
+  namespace Express {
+    interface Request {
+      user?: { userId: string };
+    }
+  }
+}
+
 export const createGroup = async (req: Request, res: Response) => {
   try {
     const { name, description } = req.body;
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ error: "User not authenticated" });
+      res.status(401).json({ error: "User not authenticated" });
+      return;
     }
 
     console.log(userId);
@@ -30,7 +39,8 @@ export const getGroups = async (req: Request, res: Response) => {
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ error: "User not authenticated" });
+      res.status(401).json({ error: "User not authenticated" });
+      return;
     }
 
     const groups = await groupService.getGroups(userId);
@@ -47,11 +57,13 @@ export const updateGroup = async (req: Request, res: Response) => {
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ error: "User not authenticated" });
+      res.status(401).json({ error: "User not authenticated" });
+      return;
     }
 
     if (!Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ error: "Invalid group ID" });
+      res.status(400).json({ error: "Invalid group ID" });
+      return;
     }
 
     const group = await groupService.updateGroup(id, {
@@ -62,7 +74,8 @@ export const updateGroup = async (req: Request, res: Response) => {
     });
 
     if (!group) {
-      return res.status(404).json({ error: "Group not found" });
+      res.status(404).json({ error: "Group not found" });
+      return;
     }
 
     res.json(group);
@@ -77,17 +90,20 @@ export const deleteGroup = async (req: Request, res: Response) => {
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ error: "User not authenticated" });
+      res.status(401).json({ error: "User not authenticated" });
+      return;
     }
 
     if (!Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ error: "Invalid group ID" });
+      res.status(400).json({ error: "Invalid group ID" });
+      return;
     }
 
     const deleted = await groupService.deleteGroup(id, userId);
 
     if (!deleted) {
-      return res.status(404).json({ error: "Group not found" });
+      res.status(404).json({ error: "Group not found" });
+      return;
     }
 
     res.status(204).send();
@@ -102,19 +118,20 @@ export const joinGroup = async (req: Request, res: Response) => {
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ error: "User not authenticated" });
+      res.status(401).json({ error: "User not authenticated" });
+      return;
     }
 
     if (!Types.ObjectId.isValid(groupId)) {
-      return res.status(400).json({ error: "Invalid group ID" });
+      res.status(400).json({ error: "Invalid group ID" });
+      return;
     }
 
     const group = await groupService.joinGroup(groupId, userId);
 
     if (!group) {
-      return res
-        .status(404)
-        .json({ error: "Group not found or invite invalid" });
+      res.status(404).json({ error: "Group not found or invite invalid" });
+      return;
     }
 
     res.json(group);

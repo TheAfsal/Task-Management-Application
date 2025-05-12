@@ -8,7 +8,8 @@ export const createTask = async (req: Request, res: Response) => {
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ error: "User not authenticated" });
+      res.status(401).json({ error: "User not authenticated" });
+      return 
     }
 
     const task = await taskService.createTask({
@@ -31,7 +32,8 @@ export const getTasks = async (req: Request, res: Response) => {
     const userId = req.user?.userId;
     const { groupId, page = "1", limit = "10" } = req.query;
     if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
+      res.status(401).json({ error: "Unauthorized" });
+      return
     }
     const tasks = await taskService.getTasksService(
       userId,
@@ -52,11 +54,13 @@ export const updateTask = async (req: Request, res: Response) => {
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ error: "User not authenticated" });
+      res.status(401).json({ error: "User not authenticated" });
+      return 
     }
 
     if (!Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ error: "Invalid task ID" });
+      res.status(400).json({ error: "Invalid task ID" });
+      return 
     }
 
     const task = await taskService.updateTask(id, {
@@ -69,7 +73,8 @@ export const updateTask = async (req: Request, res: Response) => {
     });
 
     if (!task) {
-      return res.status(404).json({ error: "Task not found" });
+      res.status(404).json({ error: "Task not found" });
+      return 
     }
 
     res.json(task);
@@ -84,17 +89,20 @@ export const deleteTask = async (req: Request, res: Response) => {
     const userId = req.user?.userId;
 
     if (!userId) {
-      return res.status(401).json({ error: "User not authenticated" });
+      res.status(401).json({ error: "User not authenticated" });
+      return 
     }
 
     if (!Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ error: "Invalid task ID" });
+      res.status(400).json({ error: "Invalid task ID" });
+      return 
     }
 
     const deleted = await taskService.deleteTask(id, userId);
 
     if (!deleted) {
-      return res.status(404).json({ error: "Task not found" });
+      res.status(404).json({ error: "Task not found" });
+      return 
     }
 
     res.status(204).send();
