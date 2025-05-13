@@ -17,7 +17,10 @@ export const register = async (req: Request, res: Response) => {
       return;
     }
 
-    const user = new User({ username: name, email, password });
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    const user = new User({ username: name, email, password: hashedPassword });
     await user.save();
 
     const accessToken = jwt.sign(

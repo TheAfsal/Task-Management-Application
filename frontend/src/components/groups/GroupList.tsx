@@ -45,7 +45,7 @@ interface GroupListProps {
 
 export default function GroupList({ groups, fetchGroups }: GroupListProps) {
   // const { toast } = useToast();
-  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  const [selectedGroup] = useState<Group | null>(null);
   const [isTransferOpen, setIsTransferOpen] = useState(false);
 
   const handleTransferLeadership = (newLeader: string) => {
