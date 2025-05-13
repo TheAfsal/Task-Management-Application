@@ -115,7 +115,7 @@ export default function GroupList({ groups, fetchGroups }: GroupListProps) {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Group Actions</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
+                  {/* <DropdownMenuItem
                     onClick={() => {
                       setSelectedGroup(group);
                       setIsTransferOpen(true);
@@ -123,7 +123,7 @@ export default function GroupList({ groups, fetchGroups }: GroupListProps) {
                   >
                     <Crown className="mr-2 h-4 w-4" />
                     Transfer Leadership
-                  </DropdownMenuItem>
+                  </DropdownMenuItem> */}
                   <DropdownMenuItem
                     onClick={() => handleDeleteGroup(group._id)}
                   >
@@ -152,7 +152,7 @@ export default function GroupList({ groups, fetchGroups }: GroupListProps) {
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-xs truncate max-w-[120px]">
-                    {`${group.leader.username} (${group.leader.email})`}
+                    {`${member.username} (${member.email})`}
                   </span>
                 </Badge>
               ))}
