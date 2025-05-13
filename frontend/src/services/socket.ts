@@ -5,6 +5,7 @@ import type { Group } from "../types/group.types";
 import type { Invite } from "../types/invite.types";
 
 let socket: Socket | null = null;
+const baseURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
 export const initializeSocket = () => {
   if (socket) return socket;
@@ -15,7 +16,7 @@ export const initializeSocket = () => {
     return null;
   }
 
-  socket = io("http://localhost:5000", {
+  socket = io(baseURL, {
     auth: { token },
     withCredentials: true,
   });
