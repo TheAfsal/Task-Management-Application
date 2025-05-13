@@ -9,7 +9,7 @@ export const createTask = async (req: Request, res: Response) => {
 
     if (!userId) {
       res.status(401).json({ error: "User not authenticated" });
-      return 
+      return;
     }
 
     const task = await taskService.createTask({
@@ -30,16 +30,18 @@ export const createTask = async (req: Request, res: Response) => {
 export const getTasks = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.userId;
-    const { groupId, page = "1", limit = "10" } = req.query;
+    const { groupId, page = "1", limit = "10",search } = req.query;
     if (!userId) {
       res.status(401).json({ error: "Unauthorized" });
-      return
+      return;
     }
+    
     const tasks = await taskService.getTasksService(
       userId,
       groupId as string | undefined,
       parseInt(page as string, 10),
-      parseInt(limit as string, 10)
+      parseInt(limit as string, 10),
+      search as string | undefined
     );
     res.json(tasks);
   } catch (error: any) {
@@ -55,12 +57,12 @@ export const updateTask = async (req: Request, res: Response) => {
 
     if (!userId) {
       res.status(401).json({ error: "User not authenticated" });
-      return 
+      return;
     }
 
     if (!Types.ObjectId.isValid(id)) {
       res.status(400).json({ error: "Invalid task ID" });
-      return 
+      return;
     }
 
     const task = await taskService.updateTask(id, {
@@ -74,7 +76,7 @@ export const updateTask = async (req: Request, res: Response) => {
 
     if (!task) {
       res.status(404).json({ error: "Task not found" });
-      return 
+      return;
     }
 
     res.json(task);
@@ -90,23 +92,37 @@ export const deleteTask = async (req: Request, res: Response) => {
 
     if (!userId) {
       res.status(401).json({ error: "User not authenticated" });
-      return 
+      return;
     }
 
     if (!Types.ObjectId.isValid(id)) {
       res.status(400).json({ error: "Invalid task ID" });
-      return 
+      return;
     }
 
     const deleted = await taskService.deleteTask(id, userId);
 
     if (!deleted) {
       res.status(404).json({ error: "Task not found" });
-      return 
+      return;
     }
 
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
+  }
+};
+
+export const getTaskStatistics = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+    const statistics = await taskService.getTaskStatistics(userId);
+    res.json(statistics);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
   }
 };

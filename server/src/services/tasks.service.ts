@@ -107,22 +107,33 @@ export const getTasksService = async (
   userId: string,
   groupId?: string,
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
+  search?: string
 ): Promise<{ tasks: Task[]; totalPages: number; currentPage: number }> => {
-  const query: any = groupId ? { groupId } : {};
+  const query: any = {};
 
+  // Filter by groupId or user's groups
   const groups = await GroupModel.find({
     $or: [{ leader: userId }, { members: userId }],
   });
-
   //@ts-ignore
   const groupIds = groups.map((g) => g._id.toString());
   query.groupId = groupId ? groupId : { $in: groupIds };
 
+  // Add search query for title or description
+  if (search) {
+    query.$or = [
+      { title: { $regex: search, $options: "i" } },
+      { description: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  // Count total tasks for pagination
   const totalTasks = await TaskModel.countDocuments(query);
   const totalPages = Math.ceil(totalTasks / limit);
   const skip = (page - 1) * limit;
 
+  // Fetch tasks with pagination and populate assignee
   const tasks = await TaskModel.find(query)
     .populate("assignee", "_id email username")
     .skip(skip)
@@ -221,4 +232,58 @@ export const deleteTask = async (
   await TaskModel.findByIdAndDelete(id);
   emitTaskDeleted(id, task.groupId);
   return true;
+};
+
+export const getTaskStatistics = async (userId: string) => {
+  const groups = await GroupModel.find({ members: userId }).select("_id name");
+  const groupIds = groups.map((g) => g._id);
+
+  const completed = await TaskModel.countDocuments({
+    groupId: { $in: groupIds },
+    completed: true,
+  });
+  const incomplete = await TaskModel.countDocuments({
+    groupId: { $in: groupIds },
+    completed: false,
+  });
+
+  const overdueByGroup = await TaskModel.aggregate([
+    {
+      $match: {
+        groupId: { $in: groupIds },
+        completed: false,
+        dueDate: { $lt: new Date() },
+      },
+    },
+    {
+      $group: {
+        _id: "$groupId",
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $lookup: {
+        from: "groups",
+        localField: "_id",
+        foreignField: "_id",
+        as: "group",
+      },
+    },
+    {
+      $unwind: "$group",
+    },
+    {
+      $project: {
+        groupId: "$_id",
+        groupName: "$group.name",
+        count: 1,
+      },
+    },
+  ]);
+
+  return {
+    completed,
+    incomplete,
+    overdueByGroup,
+  };
 };

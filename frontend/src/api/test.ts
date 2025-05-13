@@ -1,10 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Task, TaskSubmitForm } from "../types/task.types";
 import type { Group } from "../types/group.types";
 import api from "./axiosInstance";
 import type { Invite } from "@/types/invite.types";
+import type { TaskStatistics } from "@/pages/Home";
 
 // Tasks: Create a new task
-export const postTask = async (data: TaskSubmitForm ): Promise<Task> => {
+export const postTask = async (data: TaskSubmitForm): Promise<Task> => {
   try {
     const response = await api.post("/tasks", data);
     return response.data;
@@ -31,7 +33,10 @@ export const getTasks = async (
 };
 
 // Tasks: Update a task
-export const updateTask = async (id: string, data: Partial<Task>): Promise<Task> => {
+export const updateTask = async (
+  id: string,
+  data: Partial<Task>
+): Promise<Task> => {
   try {
     const response = await api.put(`/tasks/${id}`, data);
     return response.data;
@@ -76,7 +81,10 @@ export const getGroups = async (): Promise<Group[]> => {
 };
 
 // Groups: Update a group
-export const updateGroup = async (id: string, data: Partial<Group>): Promise<Group> => {
+export const updateGroup = async (
+  id: string,
+  data: Partial<Group>
+): Promise<Group> => {
   try {
     const response = await api.put(`/groups/${id}`, data);
     return response.data;
@@ -107,12 +115,7 @@ export const joinGroup = async (groupId: string): Promise<Group> => {
   }
 };
 
-// Invites: Send an invitation
-export const postInvite = async (
-  data: any
-): Promise<any> => {
-//   data: Omit<Invite, "_id" | "createdAt" | "updatedAt" | "status">
-// ): Promise<Invite> => {
+export const postInvite = async (data:any): Promise<any> => {
   try {
     const response = await api.post("/invites", data);
     return response.data;
@@ -133,4 +136,9 @@ export const acceptInvite = async (inviteId: string): Promise<void> => {
 
 export const rejectInvite = async (inviteId: string): Promise<void> => {
   await api.post(`/invites/reject/${inviteId}`);
+};
+
+export const getStatistics = async (): Promise<TaskStatistics> => {
+  const response = await api.get(`/tasks/statistics`);
+  return response.data;
 };
