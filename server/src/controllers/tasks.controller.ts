@@ -2,10 +2,13 @@ import { Request, Response } from "express";
 import * as taskService from "../services/tasks.service";
 import { Types } from "mongoose";
 import { STATUS_CODE } from "../constants/statusCode";
+import { taskSchema } from "../validations/taskSchema";
 
 export const createTask = async (req: Request, res: Response) => {
   try {
-    const { title, description, groupId, assignee } = req.body;
+    const validatedData = taskSchema.parse(req.body);
+    const { title, description, groupId, assignee } = validatedData;
+
     const userId = req.user?.userId;
 
     if (!userId) {

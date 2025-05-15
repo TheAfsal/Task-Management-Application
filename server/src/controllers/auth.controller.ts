@@ -3,16 +3,12 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import User from "../models/User.model";
 import { STATUS_CODE } from "../constants/statusCode";
+import { loginSchema, userSchema } from "../validations/userSchema";
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) {
-      res
-        .status(STATUS_CODE.Bad_Request)
-        .json({ error: "All fields are required" });
-      return;
-    }
+    const validatedData = userSchema.parse(req.body);
+    const { name, email, password } = validatedData;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -54,17 +50,18 @@ export const register = async (req: Request, res: Response) => {
   } catch (error: any) {
     res
       .status(STATUS_CODE.Internal_Server_Error)
-      .json({ error: "Registration failed", details: error.message });
+      .json({
+        error: "Validation failed",
+        details: error.errors ?? error,
+      });
+      // .json({ error: "Registration failed", details: error.message });
   }
 };
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      res.status(400).json({ error: "Email and password are required" });
-      return;
-    }
+    const validatedData = loginSchema.parse(req.body);
+    const { email, password } = validatedData;
 
     const user = await User.findOne({ email });
     if (!user) {
@@ -106,7 +103,11 @@ export const login = async (req: Request, res: Response) => {
   } catch (error: any) {
     res
       .status(STATUS_CODE.Internal_Server_Error)
-      .json({ error: "Login failed", details: error.message });
+      .json({
+        error: "Validation failed",
+        details: error.errors ?? error,
+      });
+      // .json({ error: "Login failed", details: error.message });
   }
 };
 

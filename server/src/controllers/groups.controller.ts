@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import * as groupService from "../services/groups.service";
 import { Types } from "mongoose";
 import { STATUS_CODE } from "../constants/statusCode";
+import { createGroupSchema } from "../validations/groupSchema";
 
 declare global {
   namespace Express {
@@ -13,7 +14,8 @@ declare global {
 
 export const createGroup = async (req: Request, res: Response) => {
   try {
-    const { name, description } = req.body;
+    const validatedData = createGroupSchema.parse(req.body);
+    const { name, description } = validatedData;
     const userId = req.user?.userId;
 
     if (!userId) {
