@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import User from "../models/User.model";
-import { STATUS_CODE } from "constants/statusCode";
+import { STATUS_CODE } from "../constants/statusCode";
 
 export const register = async (req: Request, res: Response) => {
   try {

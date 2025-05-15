@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import * as groupService from "../services/groups.service";
 import { Types } from "mongoose";
-import { STATUS_CODE } from "constants/statusCode";
+import { STATUS_CODE } from "../constants/statusCode";
 
 declare global {
   namespace Express {

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import * as taskService from "../services/tasks.service";
 import { Types } from "mongoose";
-import { STATUS_CODE } from "constants/statusCode";
+import { STATUS_CODE } from "../constants/statusCode";
 
 export const createTask = async (req: Request, res: Response) => {
   try {

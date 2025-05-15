@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import * as inviteService from "../services/invites.service";
-import { STATUS_CODE } from "constants/statusCode";
+import { STATUS_CODE } from "../constants/statusCode";
 
 export const sendInvite = async (req: Request, res: Response) => {
   try {
