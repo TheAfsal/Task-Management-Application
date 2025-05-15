@@ -51,6 +51,7 @@ export const createTask = async ({
     description,
     groupId,
     assignee,
+    createdBy: userId,
     completed: false,
   });
 
@@ -182,7 +183,10 @@ export const updateTask = async (
   }
 
   if (assignee) {
-    const user = await UserModel.findOne({ email: assignee });
+    const user = await UserModel.findById(assignee);
+    console.log(assignee);
+    console.log(user);
+    console.log(group.members);
     if (!user || !group.members.includes(assignee)) {
       throw new Error("Assignee not found or not in group");
     }

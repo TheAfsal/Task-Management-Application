@@ -5,7 +5,7 @@ import api from "../api/axiosInstance";
 interface AuthState {
   isAuthenticated: boolean;
   accessToken: string | null;
-  user: { name: string; email: string } | null;
+  user: { id: string; email: string } | null;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -23,8 +23,12 @@ export const useAuthStore = create<AuthState>((set) => ({
         { email, password },
         { withCredentials: true }
       );
-      const { accessToken } = response.data;
-      set({ isAuthenticated: true, accessToken, user: { email, name: "" } });
+      const { accessToken, user } = response.data;
+      set({
+        isAuthenticated: true,
+        accessToken,
+        user: { email: user.email, id: user._id },
+      });
     } catch (error) {
       throw new Error("Login failed");
     }
@@ -40,8 +44,12 @@ export const useAuthStore = create<AuthState>((set) => ({
         },
         { withCredentials: true }
       );
-      const { accessToken } = response.data;
-      set({ isAuthenticated: true, accessToken, user: { name, email } });
+      const { accessToken, user } = response.data;
+      set({
+        isAuthenticated: true,
+        accessToken,
+        user: { email: user.email, id: user._id },
+      });
     } catch (error) {
       throw new Error("Registration failed");
     }
@@ -61,8 +69,12 @@ export const useAuthStore = create<AuthState>((set) => ({
         {},
         { withCredentials: true }
       );
-      const { accessToken } = response.data;
-      set({ isAuthenticated: true, accessToken });
+      const { accessToken, user } = response.data;
+      set({
+        isAuthenticated: true,
+        accessToken,
+        user: { email: user.email, id: user._id },
+      });
     } catch (error) {
       set({ isAuthenticated: false, accessToken: null, user: null });
       throw new Error("Token refresh failed");

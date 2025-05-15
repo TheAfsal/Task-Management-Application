@@ -68,12 +68,12 @@ export default function Home() {
   const [statistics, setStatistics] = useState<TaskStatistics | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const limit = 10;
-  const lastRequest = useRef<string | null>(null); // Track last request to deduplicate
+  const lastRequest = useRef<string | null>(null);
 
   const fetchTasks = useCallback(
     async (page: number = 1) => {
-      const requestKey = `${selectedGroup || "all"}-${page}-${search || ""}`; // Unique key for request
-      if (lastRequest.current === requestKey) return; // Skip if duplicate request
+      const requestKey = `${selectedGroup || "all"}-${page}-${search || ""}`;
+      if (lastRequest.current === requestKey) return; 
 
       lastRequest.current = requestKey;
       try {
@@ -90,7 +90,7 @@ export default function Home() {
       } catch (error) {
         toast.error("Failed to fetch tasks");
       } finally {
-        lastRequest.current = null; // Reset after completion
+        lastRequest.current = null; 
       }
     },
     [selectedGroup, search]
@@ -414,7 +414,7 @@ export default function Home() {
             </DialogDescription>
           </DialogHeader>
           <TaskForm
-          //@ts-ignore
+            //@ts-ignore
             fetchTasks={handleTaskAdded}
             groups={groups}
             initialGroupId={selectedGroup}

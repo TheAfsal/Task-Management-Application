@@ -35,7 +35,7 @@ export const getTasks = async (
 // Tasks: Update a task
 export const updateTask = async (
   id: string,
-  data: Partial<Task>
+  data: Partial<TaskSubmitForm>
 ): Promise<Task> => {
   try {
     const response = await api.put(`/tasks/${id}`, data);

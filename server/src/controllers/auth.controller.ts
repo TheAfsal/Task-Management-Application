@@ -43,7 +43,9 @@ export const register = async (req: Request, res: Response) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(201).json({ accessToken });
+    res
+      .status(201)
+      .json({ accessToken, user: { email: user.email, _id: user._id } });
   } catch (error: any) {
     res
       .status(500)
@@ -91,7 +93,7 @@ export const login = async (req: Request, res: Response) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.json({ accessToken });
+    res.json({ accessToken, user: { email: user.email, _id: user._id } });
   } catch (error: any) {
     res.status(500).json({ error: "Login failed", details: error.message });
   }
@@ -120,7 +122,7 @@ export const refresh = async (req: Request, res: Response) => {
       process.env.JWT_SECRET!,
       { expiresIn: "1h" }
     );
-    res.json({ accessToken });
+    res.json({ accessToken, user: { email: user.email, _id: user._id } });
   } catch (error: any) {
     res
       .status(403)

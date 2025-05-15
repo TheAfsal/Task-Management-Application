@@ -38,6 +38,7 @@ import TaskEditForm from "./TaskEditForm";
 import type { Task } from "../../types/task.types";
 import type { Group } from "../../types/group.types";
 import { deleteTask, updateTask } from "@/api/test";
+import { useAuthStore } from "@/store/authStore";
 
 interface TaskListProps {
   tasks: Task[];
@@ -49,6 +50,7 @@ export default function TaskList({ tasks, fetchTasks, groups }: TaskListProps) {
   // const { toast } = useToast()
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const { user } = useAuthStore((state) => state);
 
   const handleDelete = async (id: string) => {
     try {
@@ -101,6 +103,7 @@ export default function TaskList({ tasks, fetchTasks, groups }: TaskListProps) {
       </Card>
     );
   }
+  console.log("@@ task", tasks);
 
   return (
     <div className="space-y-4">
@@ -108,12 +111,14 @@ export default function TaskList({ tasks, fetchTasks, groups }: TaskListProps) {
         <Card key={task._id} className={task.completed ? "bg-muted/50" : ""}>
           <CardHeader className="pb-2 flex flex-row items-start justify-between space-y-0">
             <div className="flex items-start gap-2">
-              <Checkbox
-                id={`task-${task._id}`}
-                checked={task.completed}
-                onCheckedChange={() => handleToggle(task._id, task.completed)}
-                className="mt-1"
-              />
+              {user?.id === task?.assignee?._id && (
+                <Checkbox
+                  id={`task-${task._id}`}
+                  checked={task.completed}
+                  onCheckedChange={() => handleToggle(task._id, task.completed)}
+                  className="mt-1"
+                />
+              )}
               <div>
                 <CardTitle
                   className={`text-lg ${
@@ -129,42 +134,44 @@ export default function TaskList({ tasks, fetchTasks, groups }: TaskListProps) {
                 )}
               </div>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreHorizontal className="h-4 w-4" />
-                  <span className="sr-only">Menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleEdit(task)}>
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleToggle(task._id, task.completed)}
-                >
-                  {task.completed ? (
-                    <>
-                      <XCircle className="mr-2 h-4 w-4" />
-                      Mark as Incomplete
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="mr-2 h-4 w-4" />
-                      Mark as Complete
-                    </>
-                  )}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleDelete(task._id)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {user?.id === task.createdBy && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreHorizontal className="h-4 w-4" />
+                    <span className="sr-only">Menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleEdit(task)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleToggle(task._id, task.completed)}
+                  >
+                    {task.completed ? (
+                      <>
+                        <XCircle className="mr-2 h-4 w-4" />
+                        Mark as Incomplete
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        Mark as Complete
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleDelete(task._id)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </CardHeader>
 
           {task.description && (

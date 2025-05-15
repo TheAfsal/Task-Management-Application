@@ -17,7 +17,7 @@ import {
 } from "../ui/select";
 import { Checkbox } from "../ui/checkbox";
 import type { Task } from "../../types/task.types";
-import type { Group } from "../../types/group.types";
+import type { Group, memberDetails } from "../../types/group.types";
 import { updateTask } from "@/api/test";
 
 interface TaskEditFormProps {
@@ -41,18 +41,20 @@ export default function TaskEditForm({
   const [assignee, setAssignee] = useState(task.assignee || "");
   const [completed, setCompleted] = useState(task.completed);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [availableMembers, setAvailableMembers] = useState<string[]>([]);
+  const [availableMembers, setAvailableMembers] = useState<memberDetails[]>([]);
+
+  console.log(task);
+  console.log(availableMembers);
+  console.log(assignee);
 
   useEffect(() => {
     if (groupId) {
       const selectedGroup = groups.find((g) => g._id === groupId);
       //@ts-ignore
-      setAvailableMembers(selectedGroup?.members || []);
-      
-      console.log(availableMembers);
-      
-      //@ts-ignore
-      if (assignee && !selectedGroup?.members.includes(assignee)) {
+      const members = selectedGroup?.members || [];
+      setAvailableMembers(members);
+  
+      if (assignee && !members.some((member) => member._id === assignee)) {
         setAssignee("");
       }
     } else {
@@ -60,6 +62,7 @@ export default function TaskEditForm({
       setAssignee("");
     }
   }, [groupId, groups, assignee]);
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +82,7 @@ export default function TaskEditForm({
         title,
         description,
         groupId,
-        //  assignee,
+        assignee: assignee as string,
         completed,
       });
       setEditingTask(null);
@@ -133,11 +136,14 @@ export default function TaskEditForm({
           </Select>
         </div>
 
-        {/* <div className="space-y-2">
+        <div className="space-y-2">
           <Label htmlFor="assignee">Assignee</Label>
           <Select
-            value={assignee}
-            onValueChange={setAssignee}
+            value={assignee as string}
+            onValueChange={(e) => {
+              console.log(e);
+              setAssignee(e)
+            }}
             disabled={!groupId || availableMembers.length === 0}
           >
             <SelectTrigger id="assignee">
@@ -145,13 +151,13 @@ export default function TaskEditForm({
             </SelectTrigger>
             <SelectContent>
               {availableMembers.map((member) => (
-                <SelectItem key={member} value={member}>
-                  {member}
+                <SelectItem key={member._id} value={member._id}>
+                  {member.username}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-        </div> */}
+        </div>
       </div>
 
       <div className="flex items-center space-x-2">

@@ -6,6 +6,7 @@ export interface Task {
   description?: string
   completed: boolean
   groupId?: string
+  createdBy?: memberDetails
   assignee?: memberDetails
 }
 export interface TaskSubmitForm {

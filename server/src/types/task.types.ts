@@ -5,5 +5,6 @@ export interface Task {
     groupId: string;
     assignee?: string;
     createdAt?: string;
+    createdBy?: string;
     updatedAt?: string;
   }
