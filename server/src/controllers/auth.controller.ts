@@ -2,18 +2,23 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import User from "../models/User.model";
+import { STATUS_CODE } from "constants/statusCode";
 
 export const register = async (req: Request, res: Response) => {
   try {
     const { name, email, password } = req.body;
     if (!name || !email || !password) {
-      res.status(400).json({ error: "All fields are required" });
+      res
+        .status(STATUS_CODE.Bad_Request)
+        .json({ error: "All fields are required" });
       return;
     }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      res.status(400).json({ error: "Email already exists" });
+      res
+        .status(STATUS_CODE.Bad_Request)
+        .json({ error: "Email already exists" });
       return;
     }
 
@@ -44,11 +49,11 @@ export const register = async (req: Request, res: Response) => {
     });
 
     res
-      .status(201)
+      .status(STATUS_CODE.Created)
       .json({ accessToken, user: { email: user.email, _id: user._id } });
   } catch (error: any) {
     res
-      .status(500)
+      .status(STATUS_CODE.Internal_Server_Error)
       .json({ error: "Registration failed", details: error.message });
   }
 };
@@ -63,13 +68,17 @@ export const login = async (req: Request, res: Response) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      res.status(401).json({ error: "Invalid credentials" });
+      res
+        .status(STATUS_CODE.Unauthorized)
+        .json({ error: "Invalid credentials" });
       return;
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      res.status(401).json({ error: "Invalid credentials" });
+      res
+        .status(STATUS_CODE.Unauthorized)
+        .json({ error: "Invalid credentials" });
       return;
     }
 
@@ -95,14 +104,18 @@ export const login = async (req: Request, res: Response) => {
 
     res.json({ accessToken, user: { email: user.email, _id: user._id } });
   } catch (error: any) {
-    res.status(500).json({ error: "Login failed", details: error.message });
+    res
+      .status(STATUS_CODE.Internal_Server_Error)
+      .json({ error: "Login failed", details: error.message });
   }
 };
 
 export const refresh = async (req: Request, res: Response) => {
   const refreshToken = req.cookies.refreshToken;
   if (!refreshToken) {
-    res.status(401).json({ error: "No refresh token provided" });
+    res
+      .status(STATUS_CODE.Unauthorized)
+      .json({ error: "No refresh token provided" });
     return;
   }
 
@@ -113,7 +126,9 @@ export const refresh = async (req: Request, res: Response) => {
     const user = await User.findById(decoded.userId);
 
     if (!user) {
-      res.status(403).json({ error: "Invalid refresh token" });
+      res
+        .status(STATUS_CODE.Forbidden)
+        .json({ error: "Invalid refresh token" });
       return;
     }
 
@@ -125,7 +140,7 @@ export const refresh = async (req: Request, res: Response) => {
     res.json({ accessToken, user: { email: user.email, _id: user._id } });
   } catch (error: any) {
     res
-      .status(403)
+      .status(STATUS_CODE.Forbidden)
       .json({ error: "Invalid refresh token", details: error.message });
   }
 };
