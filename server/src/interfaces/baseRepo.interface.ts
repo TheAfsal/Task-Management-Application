@@ -6,6 +6,7 @@ interface IBaseRepository<T extends Document, ID = string> {
   findOne(filter: Partial<Record<keyof T, any>>): Promise<T | null>;
   findAll(): Promise<T[]>;
   findByIdAndUpdate(id: ID, data: Partial<T>): Promise<T | null>;
+  delete(id: ID): Promise<boolean>; 
 }
 
 export { IBaseRepository };

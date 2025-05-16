@@ -26,6 +26,11 @@ abstract class BaseRepository<T extends Document, ID = string> {
   async findByIdAndUpdate(id: ID, data: Partial<T>): Promise<T | null> {
     return this.model.findByIdAndUpdate(id, data, { new: true }).exec();
   }
+
+  async delete(id: ID): Promise<boolean> {
+    const result = await this.model.findByIdAndDelete(id).exec();
+    return !!result;
+  }
 }
 
 export default BaseRepository;

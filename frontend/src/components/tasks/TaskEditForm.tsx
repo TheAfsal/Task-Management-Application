@@ -38,7 +38,7 @@ export default function TaskEditForm({
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
   const [groupId, setGroupId] = useState(task.groupId || "");
-  const [assignee, setAssignee] = useState(task.assignee || "");
+  const [assignee, setAssignee] = useState(task.assignee?._id || "");
   const [completed, setCompleted] = useState(task.completed);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableMembers, setAvailableMembers] = useState<memberDetails[]>([]);
